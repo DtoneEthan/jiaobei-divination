@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电子筊杯 · 问神知吉凶</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600;700;900&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #15080a;
+    --bg-mid: #2a1012;
+    --bg-light: #3a1518;
+    --gold: #d4af37;
+    --gold-bright: #ffd700;
+    --gold-soft: #c9a84c;
+    --red-deep: #6b1a1a;
+    --red-temple: #8b2323;
+    --text-main: #e8dcc8;
+    --text-muted: #a89878;
+    --card-bg: rgba(30, 12, 14, 0.92);
+    --border-gold: rgba(212, 175, 55, 0.3);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Noto Serif SC', serif;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Background layers */
+  .bg-gradient {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(139, 35, 35, 0.4), transparent 60%),
+      radial-gradient(ellipse at 20% 80%, rgba(107, 26, 26, 0.3), transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(107, 26, 26, 0.25), transparent 50%),
+      linear-gradient(180deg, var(--bg-dark), var(--bg-mid) 50%, var(--bg-dark));
+  }
+
+  /* Subtle pattern overlay */
+  .bg-pattern {
+    position: fixed; inset: 0; z-index: 1;
+    opacity: 0.03;
+    background-image:
+      repeating-linear-gradient(45deg, var(--gold) 0, var(--gold) 1px, transparent 1px, transparent 30px),
+      repeating-linear-gradient(-45deg, var(--gold) 0, var(--gold) 1px, transparent 1px, transparent 30px);
+    pointer-events: none;
+  }
+
+  /* Incense smoke */
+  .smoke-container {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    z-index: 1; pointer-events: none; width: 200px; height: 100vh;
+  }
+  .smoke {
+    position: absolute; bottom: -50px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(200, 180, 150, 0.06), transparent 70%);
+    filter: blur(20px);
+  }
+  .smoke:nth-child(1) { width: 120px; height: 120px; left: 40px; animation: rise 8s ease-in-out infinite; }
+  .smoke:nth-child(2) { width: 80px; height: 80px; left: 70px; animation: rise 10s ease-in-out infinite 2s; }
+  .smoke:nth-child(3) { width: 100px; height: 100px; left: 30px; animation: rise 12s ease-in-out infinite 4s; }
+
+  @keyframes rise {
+    0% { transform: translateY(0) translateX(0) scale(0.5); opacity: 0; }
+    20% { opacity: 0.5; }
+    50% { transform: translateY(-40vh) translateX(20px) scale(1.5); opacity: 0.3; }
+    100% { transform: translateY(-90vh) translateX(-15px) scale(2.5); opacity: 0; }
+  }
+
+  /* Main container */
+  .container {
+    position: relative; z-index: 10;
+    max-width: 640px; margin: 0 auto;
+    padding: 40px 20px 60px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .title-wrapper {
+    display: inline-block;
+    position: relative;
+    padding: 0 30px;
+  }
+  .title-wrapper::before, .title-wrapper::after {
+    content: ''; position: absolute; top: 50%; transform: translateY(-50%);
+    width: 24px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold));
+  }
+  .title-wrapper::before { left: 0; }
+  .title-wrapper::after { right: 0; background: linear-gradient(-90deg, transparent, var(--gold)); }
+
+  h1 {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 3.2rem;
+    color: var(--gold-bright);
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 2px 8px rgba(0,0,0,0.5);
+    letter-spacing: 0.15em;
+    line-height: 1.2;
+  }
+  .subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    letter-spacing: 0.6em;
+    margin-top: 8px;
+    padding-left: 0.6em;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 12px;
+    padding: 28px 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(212, 175, 55, 0.08);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Input section */
+  .input-section {
+    margin-bottom: 20px;
+  }
+  .input-label {
+    font-size: 0.85rem;
+    color: var(--gold-soft);
+    margin-bottom: 10px;
+    letter-spacing: 0.15em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .input-label .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold); box-shadow: 0 0 8px var(--gold);
+  }
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    background: rgba(10, 5, 6, 0.6);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: var(--text-main);
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1rem;
+    line-height: 1.7;
+    resize: vertical;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  textarea::placeholder { color: rgba(168, 152, 120, 0.4); }
+  textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+  }
+
+  /* Button */
+  .btn-throw {
+    width: 100%;
+    padding: 16px;
+    margin-top: 16px;
+    background: linear-gradient(135deg, var(--red-temple), var(--red-deep));
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    color: var(--gold-bright);
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 0.4em;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    text-indent: 0.4em;
+  }
+  .btn-throw::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.15), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+  }
+  .btn-throw:hover::before { transform: translateX(100%); }
+  .btn-throw:hover {
+    box-shadow: 0 4px 20px rgba(139, 35, 35, 0.5), 0 0 30px rgba(212, 175, 55, 0.2);
+    transform: translateY(-2px);
+  }
+  .btn-throw:active { transform: translateY(0); }
+  .btn-throw:disabled {
+    opacity: 0.5; cursor: not-allowed; transform: none;
+  }
+
+  /* Cup animation area */
+  .cup-area {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+    min-height: 200px;
+    position: relative;
+  }
+  .cup-area.active { display: block; }
+  .cup-stage {
+    position: relative;
+    width: 200px; height: 160px;
+    margin: 0 auto;
+  }
+  .cup-svg {
+    position: absolute;
+    width: 80px; height: 50px;
+    top: 50%; left: 50%;
+  }
+  .cup-1 { animation: throwCup1 2s cubic-bezier(0.4, 0, 0.6, 1) forwards; }
+  .cup-2 { animation: throwCup2 2s cubic-bezier(0.4, 0, 0.6, 1) forwards; }
+
+  @keyframes throwCup1 {
+    0%   { transform: translate(-50%, 50px) rotate(0deg) scale(0.6); opacity: 0; }
+    15%  { opacity: 1; }
+    40%  { transform: translate(-80%, -120px) rotate(540deg) scale(1); }
+    70%  { transform: translate(-70%, 10px) rotate(900deg) scale(1); }
+    85%  { transform: translate(-65%, -8px) rotate(990deg) scale(1); }
+    100% { transform: translate(-60%, 0) rotate(1080deg) scale(1); }
+  }
+  @keyframes throwCup2 {
+    0%   { transform: translate(-50%, 50px) rotate(0deg) scale(0.6); opacity: 0; }
+    15%  { opacity: 1; }
+    40%  { transform: translate(-20%, -100px) rotate(-540deg) scale(1); }
+    70%  { transform: translate(-30%, 10px) rotate(-900deg) scale(1); }
+    85%  { transform: translate(-35%, -8px) rotate(-990deg) scale(1); }
+    100% { transform: translate(-40%, 0) rotate(-1080deg) scale(1); }
+  }
+
+  .throwing-text {
+    margin-top: 20px;
+    font-size: 1rem;
+    color: var(--gold-soft);
+    letter-spacing: 0.3em;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* Result section */
+  .result-section {
+    display: none;
+    margin-top: 20px;
+  }
+  .result-section.active {
+    display: block;
+    animation: resultReveal 0.8s ease-out;
+  }
+  @keyframes resultReveal {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .fortune-level {
+    text-align: center;
+    padding: 24px 0 16px;
+    position: relative;
+  }
+  .fortune-level-text {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 3.5rem;
+    letter-spacing: 0.2em;
+    line-height: 1;
+    text-indent: 0.1em;
+  }
+  .fortune-desc {
+    font-size: 0.85rem;
+    margin-top: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+    margin: 16px 0;
+  }
+
+  .question-echo {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+    font-style: italic;
+    padding: 0 10px;
+  }
+  .question-echo::before { content: '「'; }
+  .question-echo::after { content: '」'; }
+
+  /* Messages */
+  .messages-label {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--gold-soft);
+    letter-spacing: 0.5em;
+    margin-bottom: 14px;
+    padding-left: 0.5em;
+  }
+  .message-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    background: rgba(10, 5, 6, 0.4);
+    border-left: 2px solid var(--border-gold);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    opacity: 0;
+    animation: msgFadeIn 0.6s ease-out forwards;
+  }
+  .message-item:nth-child(1) { animation-delay: 0.2s; }
+  .message-item:nth-child(2) { animation-delay: 0.5s; }
+  .message-item:nth-child(3) { animation-delay: 0.8s; }
+
+  @keyframes msgFadeIn {
+    0% { opacity: 0; transform: translateX(-15px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+
+  .msg-num {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 1.3rem;
+    color: var(--gold);
+    flex-shrink: 0;
+    line-height: 1.5;
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+  }
+
+  /* Reset button */
+  .btn-reset {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: transparent;
+    border: 1px solid var(--border-gold);
+    border-radius: 8px;
+    color: var(--gold-soft);
+    font-family: 'Noto Serif SC', serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-indent: 0.3em;
+  }
+  .btn-reset:hover {
+    background: rgba(212, 175, 55, 0.08);
+    border-color: var(--gold);
+    color: var(--gold-bright);
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.75rem;
+    color: rgba(168, 152, 120, 0.4);
+    letter-spacing: 0.2em;
+    line-height: 1.8;
+  }
+
+  /* Particles for 大吉 */
+  .particles { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+  .particle {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: var(--gold-bright);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--gold-bright);
+    animation: floatUp 3s ease-out forwards;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(0); opacity: 0; }
+    20% { opacity: 1; transform: translateY(-20px) scale(1); }
+    100% { transform: translateY(-300px) scale(0.3); opacity: 0; }
+  }
+
+  /* Lanterns */
+  .lantern {
+    position: fixed; top: 20px; z-index: 3;
+    width: 36px; height: 46px;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .lantern-left { left: 30px; animation: sway 4s ease-in-out infinite; }
+  .lantern-right { right: 30px; animation: sway 4s ease-in-out infinite reverse; }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 2.4rem; }
+    .fortune-level-text { font-size: 2.8rem; }
+    .container { padding: 24px 14px 40px; }
+    .card { padding: 20px 16px; }
+    .lantern { display: none; }
+    .subtitle { font-size: 0.8rem; letter-spacing: 0.4em; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-gradient"></div>
+<div class="bg-pattern"></div>
+
+<!-- Lanterns -->
+<svg class="lantern lantern-left" viewBox="0 0 36 46">
+  <line x1="18" y1="0" x2="18" y2="6" stroke="#d4af37" stroke-width="1"/>
+  <ellipse cx="18" cy="22" rx="14" ry="16" fill="#8b2323" stroke="#d4af37" stroke-width="1"/>
+  <ellipse cx="18" cy="22" rx="10" ry="14" fill="#a52a2a" opacity="0.5"/>
+  <rect x="12" y="6" width="12" height="3" fill="#d4af37" rx="1"/>
+  <rect x="12" y="37" width="12" height="3" fill="#d4af37" rx="1"/>
+  <line x1="18" y1="40" x2="18" y2="46" stroke="#d4af37" stroke-width="1"/>
+  <text x="18" y="27" text-anchor="middle" fill="#ffd700" font-size="10" font-family="serif">福</text>
+</svg>
+<svg class="lantern lantern-right" viewBox="0 0 36 46">
+  <line x1="18" y1="0" x2="18" y2="6" stroke="#d4af37" stroke-width="1"/>
+  <ellipse cx="18" cy="22" rx="14" ry="16" fill="#8b2323" stroke="#d4af37" stroke-width="1"/>
+  <ellipse cx="18" cy="22" rx="10" ry="14" fill="#a52a2a" opacity="0.5"/>
+  <rect x="12" y="6" width="12" height="3" fill="#d4af37" rx="1"/>
+  <rect x="12" y="37" width="12" height="3" fill="#d4af37" rx="1"/>
+  <line x1="18" y1="40" x2="18" y2="46" stroke="#d4af37" stroke-width="1"/>
+  <text x="18" y="27" text-anchor="middle" fill="#ffd700" font-size="10" font-family="serif">运</text>
+</svg>
+
+<!-- Smoke -->
+<div class="smoke-container">
+  <div class="smoke"></div>
+  <div class="smoke"></div>
+  <div class="smoke"></div>
+</div>
+
+<div class="container">
+  <header>
+    <div class="title-wrapper">
+      <h1>电子筊杯</h1>
+    </div>
+    <p class="subtitle">问神明 知吉凶</p>
+  </header>
+
+  <div class="card">
+    <!-- Input Section -->
+    <div class="input-section" id="inputSection">
+      <div class="input-label">
+        <span class="dot"></span>
+        <span>诚心叩问 · 所求何事</span>
+      </div>
+      <textarea id="question" placeholder="请输入您想求问神明之事...&#10;例如：近期事业是否顺利？&#10;例如：所求之事能否如愿？"></textarea>
+      <button class="btn-throw" id="throwBtn" onclick="throwCups()">掷 筊 求 签</button>
+    </div>
+
+    <!-- Cup Animation Area -->
+    <div class="cup-area" id="cupArea">
+      <div class="cup-stage" id="cupStage"></div>
+      <div class="throwing-text" id="throwingText">神明降示中...</div>
+    </div>
+
+    <!-- Result Section -->
+    <div class="result-section" id="resultSection">
+      <div class="fortune-level">
+        <div class="fortune-level-text" id="fortuneText"></div>
+        <div class="fortune-desc" id="fortuneDesc"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="question-echo" id="questionEcho"></div>
+      <div class="messages-label">三 句 启 示</div>
+      <div id="messagesContainer"></div>
+      <button class="btn-reset" onclick="reset()">再 求 一 签</button>
+    </div>
+  </div>
+
+  <footer>
+    心诚则灵 · 随缘解签<br>
+    筊杯问道
+  </footer>
+</div>
+
+<div class="particles" id="particles"></div>
+
+<script>
+// ========== Fortune Data ==========
+const fortunes = {
+  '大吉': {
+    color: '#ffd700',
+    glow: 'rgba(255, 215, 0, 0.5)',
+    desc: '上上之签 · 万事亨通 · 福运极佳',
+    weight: 10,
+    messages: [
+      '福星高照，万事顺遂。所求之事，终得圆满。',
+      '贵人相扶，逢凶化吉。前路坦荡，一帆风顺。',
+      '心想事成，好运相伴。把握时机，乘势而上。',
+      '积善余庆，福报将至。心怀善念，必有回响。',
+      '龙跃深渊，鹏程万里。志存高远，终成大业。',
+      '春风得意，万事如意。珍惜当下，福运绵长。',
+      '天赐良机，莫要犹豫。勇往直前，必有所成。',
+      '喜事临门，福运双至。以诚待人，广结善缘。',
+      '紫气东来，祥云环绕。所谋皆遂，所愿皆成。',
+      '金榜题名，蟾宫折桂。苦尽甘来，前程似锦。'
+    ]
+  },
+  '中吉': {
+    color: '#ffb347',
+    glow: 'rgba(255, 179, 71, 0.4)',
+    desc: '中上之签 · 稳步向好 · 前途光明',
+    weight: 18,
+    messages: [
+      '渐入佳境，稳步前行。不急不躁，终有所成。',
+      '耐心守候，春暖花开。时运将至，静待佳音。',
+      '中庸之道，不偏不倚。脚踏实地，步步为营。',
+      '守得云开，终见月明。坚持不懈，方得始终。',
+      '勤勉耕耘，自有收获。一分耕耘，一分收获。',
+      '和气致祥，心平气和。与人为善，路自宽广。',
+      '稳中求进，不可冒进。三思后行，万事无忧。',
+      '微光初照，渐入佳境。保持初心，前路可期。',
+      '东风渐起，扬帆正当时。顺势而为，事半功倍。',
+      '种瓜得瓜，种豆得豆。勤恳做事，天道酬勤。'
+    ]
+  },
+  '下吉': {
+    color: '#e8c87a',
+    glow: 'rgba(232, 200, 122, 0.35)',
+    desc: '中等之签 · 小有喜气 · 知足常乐',
+    weight: 22,
+    messages: [
+      '小有收获，知足常乐。勿贪多求，安享太平。',
+      '细水长流，积少成多。日积月累，终成江河。',
+      '平淡是真，珍惜眼前。安分守己，自有福报。',
+      '小确幸至，心存感恩。知足知止，常乐我净。',
+      '稳步前行，小有成就。不骄不躁，继续努力。',
+      '轻舟已过，万重山来。轻松前行，不必忧虑。',
+      '初见曙光，继续坚持。前路虽远，终会抵达。',
+      '小喜临门，以和为贵。和气生财，平安是福。',
+      '安贫乐道，恬淡寡欲。心中富足，胜过千金。',
+      '平常之心，度平常之日。平凡之中，自有真意。'
+    ]
+  },
+  '平': {
+    color: '#b0b0b0',
+    glow: 'rgba(176, 176, 176, 0.3)',
+    desc: '笑杯之兆 · 时机未到 · 静心等待',
+    weight: 15,
+    messages: [
+      '缘分未到，静心等待。顺其自然，水到渠成。',
+      '心诚则灵，再问一次。诚意不够，需再深思。',
+      '天机难测，顺其自然。不必强求，一切随缘。',
+      '心中已有答案，何必再问。静心聆听内心的声音。',
+      '时机未到，不宜操之过急。静待时机，终有转机。',
+      '神明微笑，不置可否。心中所想，或需重新审视。',
+      '凡事不可一蹴而就，因缘和合，方得其成。',
+      '心若不定，万事难成。先安其心，再谋其事。'
+    ]
+  },
+  '凶': {
+    color: '#9b7ea8',
+    glow: 'rgba(155, 126, 168, 0.3)',
+    desc: '中下之签 · 小有波折 · 谨慎行事',
+    weight: 18,
+    messages: [
+      '诸事不顺，谨慎为上。三思而行，避免冲动。',
+      '小有波折，不必忧虑。调整心态，终会度过。',
+      '暂遇困境，蓄势待发。低潮之时，蓄力前行。',
+      '口舌是非，谨言慎行。少说多做，以静制动。',
+      '小有损失，不必计较。破财消灾，后福无穷。',
+      '交友需慎，防小人口舌。明辨是非，远离是非。',
+      '健康为重，注意身体。劳逸结合，切忌过劳。',
+      '凡事低调，不宜张扬。韬光养晦，待时再动。',
+      '退一步海阔天空，忍一时风平浪静。以退为进。',
+      '塞翁失马，焉知非福。失之东隅，收之桑榆。'
+    ]
+  },
+  '大凶': {
+    color: '#a04040',
+    glow: 'rgba(160, 64, 64, 0.4)',
+    desc: '下下之签 · 诸事不利 · 宜守宜静',
+    weight: 7,
+    messages: [
+      '诸事不利，宜守不宜攻。静待时变，不可妄动。',
+      '劫数将至，需行善积德。多做好事，可化厄运。',
+      '前路艰险，步步为营。如履薄冰，谨言慎行。',
+      '破财之象，需守财务。切忌投资，保守为上。',
+      '小人当道，需防暗箭。明哲保身，不可轻信。',
+      '心浮气躁，易生祸端。静心修德，以静制动。',
+      '诸事不宜，静待转运。行善积德，可改运势。',
+      '困难重重，需有大智。不弃不馁，终见光明。',
+      '冬天已至，春天不远。坚守本心，静待转机。',
+      '祸兮福所倚，福兮祸所伏。处变不惊，方能转危为安。'
+    ]
+  }
+};
+
+// ========== Divination Logic ==========
+function divine() {
+  const entries = Object.entries(fortunes);
+  const totalWeight = entries.reduce((sum, [, data]) => sum + data.weight, 0);
+  let random = Math.random() * totalWeight;
+  for (const [level, data] of entries) {
+    random -= data.weight;
+    if (random <= 0) {
+      return { level, ...data };
+    }
+  }
+  return { level: '平', ...fortunes['平'] };
+}
+
+function pickThree(arr) {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3);
+}
+
+// ========== Cup SVG ==========
+function cupSVG(flatUp) {
+  // flatUp = true: flat side up (阳面/yang)
+  // flatUp = false: curved side up (阴面/yin)
+  const rotation = flatUp ? 0 : 180;
+  return `
+    <svg class="cup-svg" viewBox="0 0 100 56" style="transform-origin: center;">
+      <g transform="rotate(${rotation} 50 28)">
+        <!-- Shadow -->
+        <ellipse cx="50" cy="52" rx="38" ry="4" fill="rgba(0,0,0,0.3)" />
+        <!-- Cup body - crescent shape -->
+        <path d="M 8 28 Q 50 54 92 28 Q 50 16 8 28 Z"
+              fill="url(#cupGrad)" stroke="#8b6914" stroke-width="1.5"/>
+        <!-- Inner highlight -->
+        <path d="M 14 30 Q 50 48 86 30 Q 50 22 14 30 Z"
+              fill="rgba(139, 105, 20, 0.15)"/>
+        <!-- Wood grain lines -->
+        <path d="M 20 32 Q 50 44 80 32" stroke="rgba(101, 67, 33, 0.2)" stroke-width="0.5" fill="none"/>
+        <path d="M 25 34 Q 50 42 75 34" stroke="rgba(101, 67, 33, 0.15)" stroke-width="0.5" fill="none"/>
+      </g>
+      <defs>
+        <linearGradient id="cupGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#c4923a"/>
+          <stop offset="40%" stop-color="#a07028"/>
+          <stop offset="100%" stop-color="#7a5018"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  `;
+}
+
+// ========== Main Actions ==========
+let isThrowing = false;
+
+function throwCups() {
+  if (isThrowing) return;
+  const question = document.getElementById('question').value.trim();
+
+  // Hide input, show animation
+  document.getElementById('inputSection').style.display = 'none';
+  document.getElementById('resultSection').classList.remove('active');
+  document.getElementById('cupArea').classList.add('active');
+
+  // Determine result now (but reveal later)
+  const result = divine();
+
+  // Determine cup faces for visual (for 吉: one up one down = 圣杯; for 平: both same = 笑杯; for 凶: varies)
+  let cup1Flat, cup2Flat;
+  if (result.level === '大吉' || result.level === '中吉') {
+    // 圣杯 (one yang one yin) - clear yes
+    cup1Flat = true; cup2Flat = false;
+  } else if (result.level === '下吉') {
+    cup1Flat = false; cup2Flat = true;
+  } else if (result.level === '平') {
+    // 笑杯 (both yang) - laughing/neutral
+    cup1Flat = true; cup2Flat = true;
+  } else if (result.level === '凶') {
+    // 阴杯 (both yin) - no
+    cup1Flat = false; cup2Flat = false;
+  } else {
+    // 大凶 - 阴杯 with different rotation
+    cup1Flat = false; cup2Flat = false;
+  }
+
+  // Render cups with animation
+  const stage = document.getElementById('cupStage');
+  stage.innerHTML = cupSVG(cup1Flat).replace('class="cup-svg"', 'class="cup-svg cup-1"')
+              + cupSVG(cup2Flat).replace('class="cup-svg"', 'class="cup-svg cup-2"');
+
+  isThrowing = true;
+
+  // Show result after animation
+  setTimeout(() => {
+    showResult(result, question);
+    isThrowing = false;
+  }, 2200);
+}
+
+function showResult(result, question) {
+  document.getElementById('cupArea').classList.remove('active');
+
+  // Set fortune text
+  const fortuneText = document.getElementById('fortuneText');
+  fortuneText.textContent = result.level;
+  fortuneText.style.color = result.color;
+  fortuneText.style.textShadow = `0 0 30px ${result.glow}, 0 0 10px ${result.glow}`;
+
+  document.getElementById('fortuneDesc').textContent = result.desc;
+
+  // Echo question
+  const echoEl = document.getElementById('questionEcho');
+  if (question) {
+    echoEl.textContent = question;
+    echoEl.style.display = 'block';
+  } else {
+    echoEl.style.display = 'none';
+  }
+
+  // Pick 3 messages
+  const messages = pickThree(result.messages);
+  const nums = ['壹', '贰', '叁'];
+  const container = document.getElementById('messagesContainer');
+  container.innerHTML = messages.map((msg, i) =>
+    `<div class="message-item" style="border-left-color: ${result.color}40;">
+      <span class="msg-num" style="color: ${result.color};">${nums[i]}</span>
+      <span>${msg}</span>
+    </div>`
+  ).join('');
+
+  // Show result section
+  document.getElementById('resultSection').classList.add('active');
+
+  // Particles for 大吉
+  if (result.level === '大吉') {
+    createParticles();
+  }
+
+  // Scroll to result
+  setTimeout(() => {
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+function reset() {
+  document.getElementById('resultSection').classList.remove('active');
+  document.getElementById('cupArea').classList.remove('active');
+  document.getElementById('inputSection').style.display = 'block';
+  document.getElementById('question').value = '';
+  document.getElementById('particles').innerHTML = '';
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ========== Particles ==========
+function createParticles() {
+  const container = document.getElementById('particles');
+  container.innerHTML = '';
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = (60 + Math.random() * 30) + '%';
+    p.style.animationDelay = Math.random() * 1.5 + 's';
+    p.style.animationDuration = (2 + Math.random() * 2) + 's';
+    container.appendChild(p);
+  }
+  setTimeout(() => { container.innerHTML = ''; }, 5000);
+}
+
+// ========== Keyboard shortcut ==========
+document.getElementById('question').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    throwCups();
+  }
+});
+</script>
+
+</body>
+</html>
